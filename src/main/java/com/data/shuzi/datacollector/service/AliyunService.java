@@ -45,5 +45,5 @@ public interface AliyunService {
      *@return com.alibaba.fastjson.JSONObject
      *
      **/
-     JSONObject getHistoryData(String deviceId,String itemId);
+     JSONObject getHistoryData(String deviceId,String itemId,Long endTime);
 }

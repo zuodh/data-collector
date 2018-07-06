@@ -5,6 +5,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Random;
 
 /**
  * @author zizuo.zdh
@@ -28,9 +29,10 @@ public class HomeController {
         return "hello";
     }
 
-    @ServiceLimit
+   // @ServiceLimit
     @GetMapping(value = "/sayHello")
     public String sayHello(HttpServletRequest request, @RequestParam(value = "name") String name) {
+
         return "hello\t" + name;
     }
 }

@@ -3,14 +3,20 @@ package com.data.shuzi.datacollector.event;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.data.shuzi.datacollector.dao.DeviceRealDAO;
+import com.data.shuzi.datacollector.model.DeviceHistoryData;
+import com.data.shuzi.datacollector.pool.ThreadPool;
+import com.data.shuzi.datacollector.util.CountFactory;
 import com.data.shuzi.datacollector.util.DateUtil;
 import com.data.shuzi.datacollector.util.SpringUtils;
 import com.data.shuzi.datacollector.util.UUIDGenerate;
 import com.lmax.disruptor.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,21 +28,70 @@ import java.util.List;
  * @Version 1.0
  **/
 public class DataEventHandler implements EventHandler<DataEvent> {
+    BufferedWriter bufferedWriter;
+     {
+        try {
+            bufferedWriter = new BufferedWriter(new FileWriter(new File("C:\\Users\\zizuo.zdh\\Desktop\\historyData.txt")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static final Logger logger=LoggerFactory.getLogger(DataEventHandler.class);
     @Override
     public void onEvent(DataEvent dataEvent, long l, boolean b) throws Exception {
         JSONObject jsonObject=dataEvent.getJsonObject();
-        logger.info("Event: " + jsonObject);
+        logger.info("Event: seq->" +l);
+
         if(jsonObject==null){
             return;
         }
-        String key=jsonObject.getString("key");
-        if(("history").equals(key)){
-            saveHistoryDataDB(jsonObject);
-        }else {
-            saveDataDB(jsonObject);
-        }
+        saveHistoryFile(jsonObject);
     }
+
+    private void saveHistoryFile(JSONObject jsonObject) {
+        ThreadPool.executor(() -> {
+           DeviceRealDAO deviceRealDAO=(DeviceRealDAO)SpringUtils.getBeans("deviceRealDAO");
+           List<Object[]> list=new ArrayList<>();
+           JSONObject result=jsonObject.getJSONObject("result");
+           if(result==null){
+               return;
+           }
+           JSONArray data=result.getJSONArray("data");
+           if(data==null||data.size()==0){
+               return;
+           }
+           for(int i=0;i<data.size();i++) {
+               JSONObject val=data.getJSONObject(i);
+               DeviceHistoryData deviceHistoryData = new DeviceHistoryData();
+               deviceHistoryData.setProjAddr(jsonObject.getString("address"));
+               deviceHistoryData.setProjName(jsonObject.getString("name"));
+               deviceHistoryData.setLatitude(jsonObject.getDouble("latitude"));
+               deviceHistoryData.setLongitude(jsonObject.getDouble("longitude"));
+               deviceHistoryData.setProjId(jsonObject.getInteger("projId"));
+               deviceHistoryData.setAlias(jsonObject.getString("alias"));
+               deviceHistoryData.setDataAddress(jsonObject.getString("dataAddress"));
+               deviceHistoryData.setDevid(jsonObject.getString("devid"));
+               deviceHistoryData.setItemid(jsonObject.getString("itemid"));
+               deviceHistoryData.setItemname(jsonObject.getString("itemname"));
+               deviceHistoryData.setReadOnly(jsonObject.getString("readOnly"));
+               deviceHistoryData.setSpecificType(jsonObject.getString("specificType"));
+               deviceHistoryData.setVdeviceName(jsonObject.getString("vdeviceName"));
+               deviceHistoryData.setDevName(jsonObject.getString("devName"));
+               deviceHistoryData.setQuality(jsonObject.getString("quality"));
+               deviceHistoryData.setDatatype(jsonObject.getString("datatype"));
+               deviceHistoryData.setVal(val.getString("val"));
+               deviceHistoryData.setHtime(val.getLong("htime"));
+               list.add(new Object[]{deviceHistoryData.getProjId(), deviceHistoryData.getProjName(), deviceHistoryData.getProjAddr(), deviceHistoryData.getLatitude(), deviceHistoryData.getLongitude(),
+                       deviceHistoryData.getDevid(), deviceHistoryData.getVdeviceName(), deviceHistoryData.getDataAddress(), deviceHistoryData.getItemid(), deviceHistoryData.getItemname(), deviceHistoryData.getVal(),
+                       deviceHistoryData.getSpecificType(), deviceHistoryData.getReadOnly(), deviceHistoryData.getDevName(), deviceHistoryData.getQuality(), deviceHistoryData.getDatatype(), deviceHistoryData.getAlias(), deviceHistoryData.getHtime() / 1000});
+               CountFactory.getInc();
+           }
+            logger.info("the current thread is:" +CountFactory.get());
+            deviceRealDAO.saveHistoryData(list,CountFactory.get());
+        });
+    }
+
     public void saveHistoryDataDB(JSONObject jsonObject) {
         logger.info("saveHistoryDataDB start");
         DeviceRealDAO deviceRealDAO=(DeviceRealDAO)SpringUtils.getBeans("deviceRealDAO");

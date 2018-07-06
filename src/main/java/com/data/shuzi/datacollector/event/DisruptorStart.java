@@ -1,8 +1,12 @@
 package com.data.shuzi.datacollector.event;
 
 import com.lmax.disruptor.BlockingWaitStrategy;
+import com.lmax.disruptor.ExceptionHandler;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
+
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -22,10 +26,12 @@ public class DisruptorStart {
     private static void init(){
         DataEventFactory factory = new DataEventFactory();
         ThreadFactory threadFactory=new DataThreadFactory("disruptor");
-        disruptor = new Disruptor<DataEvent>(factory, bufferSize,threadFactory,ProducerType.MULTI, new BlockingWaitStrategy());
+        disruptor = new Disruptor<>(factory, bufferSize,threadFactory,ProducerType.MULTI, new BlockingWaitStrategy());
         disruptor.handleEventsWith(new DataEventHandler());
+        disruptor.setDefaultExceptionHandler(new DisruptorExceptionHandler());
         disruptor.start();
     }
+
     public synchronized  static DisruptorStart getInstance(){
         if(disruptor==null){
             init();

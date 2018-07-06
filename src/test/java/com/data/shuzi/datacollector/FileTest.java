@@ -8,7 +8,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author zizuo.zdh
@@ -45,5 +47,19 @@ public class FileTest {
         }
         bw.close();
 
+    }
+    @Test
+    public void test2() throws IOException {
+        Set<String> set=new HashSet<>();
+        BufferedReader br=new BufferedReader(new FileReader(new File("C:\\Users\\zizuo.zdh\\Desktop\\historyData.txt")));
+        while (br.ready()){
+            String line= br.readLine();
+            String[] arr=line.split("->");
+            if(!set.contains(arr[0]+"->"+arr[1])){
+                set.add(arr[0]+"->"+arr[1]);
+                System.out.println(arr[0]+"->"+arr[1]);
+
+            }
+        }
     }
 }

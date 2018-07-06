@@ -33,7 +33,7 @@ public class RemoteDataTask {
     DeviceRealService deviceRealService;
     private static final Logger logger=LoggerFactory.getLogger(RemoteDataTask.class);
 
-    @Scheduled(cron="0 1/2 * * * ? ")
+   // @Scheduled(cron="0 1/2 * * * ? ")
     public void loadRealData(){
        logger.info("实时任务开始执行");
         List<String> projList=deviceRealService.getProjListByDeviceReal();

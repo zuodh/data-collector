@@ -9,6 +9,7 @@ import com.data.shuzi.datacollector.common.RemoteHttpConstants;
 import com.data.shuzi.datacollector.service.AliyunService;
 import com.data.shuzi.datacollector.util.RemoteHttpClient;
 import org.asynchttpclient.Param;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -24,7 +25,7 @@ import java.util.Map;
  * @Date 2018/6/25 17:19
  * @Version 1.0
  **/
-@Service
+@Service("aliyunService")
 public class AliyunServiceImpl extends AbstractBaseCache implements AliyunService {
     @Override
     public JSONObject getAliyunToken() {
@@ -44,6 +45,7 @@ public class AliyunServiceImpl extends AbstractBaseCache implements AliyunServic
         List<Param> params=new ArrayList<Param>();
         if(jsonObject!=null) {
             params.add(new Param("token",jsonObject.getString("data")));
+            System.out.println(jsonObject.getString("token=================================="+"data"));
         }
         String result=RemoteHttpClient.get(url,params);
         if(StringUtils.isEmpty(result)){
@@ -72,8 +74,8 @@ public class AliyunServiceImpl extends AbstractBaseCache implements AliyunServic
     }
 
     @Override
-    public JSONObject getHistoryData(String deviceId, String itemId) {
-        JSONObject jsonObject= getHistoryData(deviceId, itemId,1);
+    public JSONObject getHistoryData(String deviceId, String itemId,Long endTime) {
+        JSONObject jsonObject= getHistoryData(deviceId, itemId,1,endTime);
         if(jsonObject==null){
             return jsonObject;
         }
@@ -90,7 +92,7 @@ public class AliyunServiceImpl extends AbstractBaseCache implements AliyunServic
         Integer count=total/perPage+1;
         JSONArray dataArr=result.getJSONArray("data");
         for(int i=2;i<=count;i++){
-           JSONObject innerJsonObj=getHistoryData(deviceId,itemId,i);
+           JSONObject innerJsonObj=getHistoryData(deviceId,itemId,i,endTime);
            if(innerJsonObj==null){
                continue;
            }
@@ -113,22 +115,22 @@ public class AliyunServiceImpl extends AbstractBaseCache implements AliyunServic
         return jsonObject;
     }
 
-    private JSONObject getHistoryData(String deviceId, String itemId,Integer page){
+    private JSONObject getHistoryData(String deviceId, String itemId,Integer page,Long startTime){
         String url=RemoteHttpConstants.TOKNE_URL+HttpApi.PROJECT_HISTORY_DATA;
         JSONObject jsonObject=this.getAliyunToken();
         List<Param> params=new ArrayList<>();
         /**转换为秒*/
-        Long endTime=System.currentTimeMillis()/1000;
+        //Long endTime=System.currentTimeMillis()/1000;
         /**相减后还需要转换为毫秒*/
-        Long startTime= (endTime - 180* 60 * 60 * 24)*1000;
+        Long endTime= (startTime + 60 * 60 * 1)*1000;
         if(jsonObject!=null) {
             params.add(new Param("token",jsonObject.getString("data")));
             params.add(new Param("page",String.valueOf(page)));
-            params.add(new Param("perPage",String.valueOf(100)));
+            params.add(new Param("perPage",String.valueOf(1000)));
             params.add(new Param("deviceId",deviceId));
             params.add(new Param("itemId",itemId));
-            params.add(new Param("startTime",String.valueOf(startTime)));
-            params.add(new Param("endTime",String.valueOf(System.currentTimeMillis())));
+            params.add(new Param("startTime",String.valueOf(startTime*1000)));
+            params.add(new Param("endTime",String.valueOf(endTime)));
         }
         String result=RemoteHttpClient.get(url,params);
         if(StringUtils.isEmpty(result)){

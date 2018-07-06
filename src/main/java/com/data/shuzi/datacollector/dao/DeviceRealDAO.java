@@ -1,5 +1,6 @@
 package com.data.shuzi.datacollector.dao;
 
+import com.data.shuzi.datacollector.model.DeviceHistoryData;
 import com.data.shuzi.datacollector.model.DeviceRealData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,5 +46,18 @@ public class DeviceRealDAO {
     public List<String> getProjListByDeviceReal() {
         String sql="select DISTINCT projId from tb_device_real_data";
         return jdbcTemplate.queryForList(sql,String.class);
+    }
+
+    public void saveHistoryData(List<Object[]> list,Integer count) {
+//        String tableSufix="";
+//        if(count<=5000000){
+//            tableSufix="4";
+//        }else if (count>5000000&&count<10000000){
+//            tableSufix="5";
+//        }else{
+//            tableSufix="6";
+//        }
+        String sql="insert into tb_device_his_info_"+5+" (projId,projName,projAddr,latitude,longitude,devid,vdeviceName,dataAddress,itemid,itemname,val,specificType,readOnly,devName,quality,datatype,alias,htime) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,from_unixtime(?))";
+        jdbcTemplate.batchUpdate(sql,list);
     }
 }
